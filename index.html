@@ -11,16 +11,25 @@
 <div class="group"><h3>Klient a období</h3><label>Klient</label><input id="client"><label>ID účtu</label><input id="account"><div class="two"><div><label>Od</label><input id="from"></div><div><label>Do</label><input id="to"></div></div><label>Datum vystavení</label><input id="issued"></div>
 <div class="group"><h3>Upozornění a metodika</h3><label>Právní upozornění</label><textarea id="disclaimer"></textarea><label>Přepočet měn</label><textarea id="fx"></textarea><label>Další poznámka</label><textarea id="note"></textarea></div>
 </aside>
-<section class="preview"><p class="hint">Živý náhled · změny se promítají průběžně. Pro PDF použijte tlačítko Exportovat PDF a v dialogu tisku zvolte „Uložit jako PDF“.</p><div id="paper" class="paper"></div></section>
+<section class="preview"><p class="hint">Živý náhled · změny se promítají průběžně. Pro PDF použijte tlačítko Exportovat PDF a v dialogu tisku zvolte „Uložit jako PDF“.</p><div class="panel" style="margin-bottom:12px">
+<h2>Import transakcí a automatické výpočty</h2>
+<p class="hint">Nahrajte CSV export transakcí. První řádek musí obsahovat názvy sloupců. Ve vzorcích odkazujte na názvy sloupců v hranatých závorkách, např. <b>[Množství] * [Cena]</b>. Výsledky se vypočítají pro každý řádek.</p>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="csvFile" type="file" accept=".csv,text/csv" style="max-width:300px"><button id="clearCsv">Vymazat data</button><button id="downloadCsv" class="primary" disabled>Export výsledků CSV</button></div>
+<div id="csvStatus" class="hint" style="margin-top:8px">Zatím nejsou načteny žádné transakce.</div>
+<div id="csvPreview" style="overflow:auto;margin-top:10px"></div>
+</div>
+<div id="paper" class="paper"></div></section>
 <aside class="panel right"><div><h2>Struktura reportu</h2><div id="sections"></div><p class="hint">Zapínejte/vypínejte sekce a měňte jejich pořadí.</p></div>
 <div class="group"><h3>Souhrnné ukazatele</h3><div id="kpis"></div><button id="addKpi">＋ Ukazatel</button></div>
 <div class="group"><h3>Sloupce transakcí</h3><div id="cols"></div><button id="addCol">＋ Sloupec</button></div>
 <div class="group"><h3>Produktové skupiny</h3><div id="products"></div><button id="addProd">＋ Produkt</button></div>
 <div class="group"><h3>FAQ</h3><div id="faqs"></div><button id="addFaq">＋ FAQ</button></div>
+<div class="group"><h3>Výpočty a vzorce</h3><p class="hint">Vytvářejte vlastní bezpečné vzorce nad datovými poli. Vzorce se ukládají do exportu nastavení.</p><div id="formulaEditor"></div><div style="background:#f5f7fc;padding:8px;border-radius:8px;margin:8px 0"><b style="font-size:11px">Testovací vstupy</b><div class="two"><div><label>Počet kusů</label><input data-testvar="Počet kusů" value="2"></div><div><label>Nákupní cena</label><input data-testvar="Nákupní cena" value="100"></div><div><label>Prodejní cena</label><input data-testvar="Prodejní cena" value="150"></div><div><label>Poplatky</label><input data-testvar="Poplatky" value="5"></div><div><label>Hodnota prodeje</label><input data-testvar="Hodnota prodeje" value="300"></div><div><label>Pořizovací hodnota</label><input data-testvar="Pořizovací hodnota" value="200"></div></div><div id="formulaTests" class="hint">Výsledky testovacích výpočtů se zobrazí u jednotlivých vzorců.</div></div><button id="addFormula">＋ Nový vzorec</button><div class="hint" style="margin-top:8px">Podporované operátory: + − * /, závorky a funkce ROUND, ABS, MIN, MAX, IF. Proměnné pište do hranatých závorek, např. [Prodej] - [Pořízení] - [Poplatky].</div></div>
 <div class="group"><h3>Týmová práce</h3><p class="hint">Tato samostatná verze ukládá data v tomto prohlížeči. Export/import JSON umožňuje předat nastavení kolegům. Pro sdílenou databázi, přihlášení a souběžnou editaci více lidí bude potřeba nasadit aplikaci s týmovým úložištěm.</p></div></aside>
 </main>
 <script>
 const base={title:"DAŇOVÝ REPORT",subtitle:"Přehled transakcí, výnosů a souvisejících údajů za zdaňovací období",navy:"#11165c",accent:"#2546f0",logo:"",client:"{{Jméno / název klienta}}",account:"{{ID klienta / účtu}}",from:"1. 1. 2025",to:"31. 12. 2025",issued:"{{DD. MM. RRRR}}",disclaimer:"Tento report je informační přehled dat evidovaných v Pluso. Sám o sobě neurčuje, zda a v jaké výši máte daňovou povinnost, a nenahrazuje daňové přiznání ani individuální daňové posouzení. Před podáním přiznání doporučujeme report a svůj daňový postup konzultovat s finančním nebo daňovým poradcem.",fx:"Částky v cizích měnách jsou přepočteny jednotným kurzem vyhlášeným Generálním finančním ředitelstvím (GFŘ) pro příslušné zdaňovací období. Report uvádí použitý kurz / zdroj a období jeho platnosti.",note:"Report zahrnuje pouze data dostupná v evidenci Pluso; nemusí obsahovat transakce a výnosy mimo Pluso.",sections:[["Souhrn za období",true],["Souhrn produktových skupin",true],["Detail transakcí",true],["Dividendy, úroky a výnosy",true],["Časté otázky",true]],kpis:[["Počet transakcí","{{Počet}}",true],["Příjmy z prodejů / dispozic","{{CZK}}",true],["Výdaje na pořízení","{{CZK}}",true],["Dividendy a jiné výnosy","{{CZK}}",true],["Poplatky","{{CZK}}",true]],cols:["Produkt / název","ISIN / ID","Transakce / lot","Datum nákupu / vkladu","Datum prodeje / výběru","Držení déle než 3 roky*","Měna","Počet kusů","Celková hodnota pořízení","Hodnota při prodeji / výběru","Základ daně / srážka / zajištění","Zisk / ztráta"],products:["Kryptoměny","Cenné papíry","Ostatní investiční produkty"],faqs:[["Musím report někam odevzdat?","Report je podklad pro vaši evidenci a přípravu daňových podkladů. Uschovejte jej spolu s dalšími dokumenty a konkrétní postup konzultujte s daňovým poradcem."],["Znamená nula, že nemám daňovou povinnost?","Ne. Prázdné pole nebo nulový součet znamená pouze to, že odpovídající položka není v evidenci Pluso uvedena nebo její součet vychází na nulu."],["Proč se částky přepočítávají do CZK?","Částky v cizích měnách jsou přepočteny jednotným kurzem GFŘ pro příslušné zdaňovací období. Konkrétní použití ověřte s poradcem."],["Lze započíst ztrátu z obchodu?","Ztráta u jedné transakce automaticky neznamená možnost snížit jiné příjmy. Záleží na druhu aktiva a daňových pravidlech."],["Jak řešit zahraniční dividendu nebo úrok?","Ověřte hrubou částku, sraženou zahraniční daň, stát zdroje a případnou možnost zohlednění zahraniční daně."]]};
+base.formulas=[{name:"Pořizovací hodnota",expr:"[Počet kusů] * [Nákupní cena]",unit:"CZK"},{name:"Hodnota prodeje",expr:"[Počet kusů] * [Prodejní cena]",unit:"CZK"},{name:"Realizovaný výsledek",expr:"[Hodnota prodeje] - [Pořizovací hodnota] - [Poplatky]",unit:"CZK"}];
 let s=JSON.parse(JSON.stringify(base));const $=id=>document.getElementById(id);const esc=x=>String(x??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function fill(){["title","subtitle","navy","accent","client","account","from","to","issued","disclaimer","fx","note"].forEach(k=>$(k).value=s[k]);}
 function tbl(head,rows){return `<table class="tbl"><thead><tr>${head.map(x=>`<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table>`}
@@ -35,8 +44,80 @@ function editors(){ $("sections").innerHTML=s.sections.map((x,i)=>`<div class="s
 $("kpis").innerHTML=s.kpis.map((x,i)=>`<div class="rowedit"><input data-k="${i}" value="${esc(x[0])}"><input data-v="${i}" value="${esc(x[1])}"><button data-kdel="${i}">×</button></div>`).join("");document.querySelectorAll("[data-k]").forEach(e=>e.oninput=()=>{s.kpis[e.dataset.k][0]=e.value;preview()});document.querySelectorAll("[data-v]").forEach(e=>e.oninput=()=>{s.kpis[e.dataset.v][1]=e.value;preview()});document.querySelectorAll("[data-kdel]").forEach(e=>e.onclick=()=>{s.kpis.splice(e.dataset.kdel,1);editors();preview()});
 $("cols").innerHTML=s.cols.map((x,i)=>`<div class="rowedit"><input data-col="${i}" value="${esc(x)}"><button data-cdel="${i}">×</button></div>`).join("");document.querySelectorAll("[data-col]").forEach(e=>e.oninput=()=>{s.cols[e.dataset.col]=e.value;preview()});document.querySelectorAll("[data-cdel]").forEach(e=>e.onclick=()=>{s.cols.splice(e.dataset.cdel,1);editors();preview()});
 $("products").innerHTML=s.products.map((x,i)=>`<div class="rowedit"><input data-prod="${i}" value="${esc(x)}"><button data-pdel="${i}">×</button></div>`).join("");document.querySelectorAll("[data-prod]").forEach(e=>e.oninput=()=>{s.products[e.dataset.prod]=e.value;preview()});document.querySelectorAll("[data-pdel]").forEach(e=>e.onclick=()=>{s.products.splice(e.dataset.pdel,1);editors();preview()});
-$("faqs").innerHTML=s.faqs.map((x,i)=>`<div style="border:1px solid var(--line);padding:7px;border-radius:7px;margin:5px 0"><label>Otázka</label><input data-q="${i}" value="${esc(x[0])}"><label>Odpověď</label><textarea data-a="${i}">${esc(x[1])}</textarea><button data-fdel="${i}">Odebrat</button></div>`).join("");document.querySelectorAll("[data-q]").forEach(e=>e.oninput=()=>{s.faqs[e.dataset.q][0]=e.value;preview()});document.querySelectorAll("[data-a]").forEach(e=>e.oninput=()=>{s.faqs[e.dataset.a][1]=e.value;preview()});document.querySelectorAll("[data-fdel]").forEach(e=>e.onclick=()=>{s.faqs.splice(e.dataset.fdel,1);editors();preview()});}
-fill();editors();preview();
+$("faqs").innerHTML=s.faqs.map((x,i)=>`<div style="border:1px solid var(--line);padding:7px;border-radius:7px;margin:5px 0"><label>Otázka</label><input data-q="${i}" value="${esc(x[0])}"><label>Odpověď</label><textarea data-a="${i}">${esc(x[1])}</textarea><button data-faqdel="${i}">Odebrat</button></div>`).join("");document.querySelectorAll("[data-q]").forEach(e=>e.oninput=()=>{s.faqs[e.dataset.q][0]=e.value;preview()});document.querySelectorAll("[data-a]").forEach(e=>e.oninput=()=>{s.faqs[e.dataset.a][1]=e.value;preview()});document.querySelectorAll("[data-faqdel]").forEach(e=>e.onclick=()=>{s.faqs.splice(e.dataset.faqdel,1);editors();preview()});
+const fe=$("formulaEditor"); if(fe){fe.innerHTML=(s.formulas||[]).map((f,i)=>`<div style="border:1px solid var(--line);border-radius:8px;padding:8px;margin:7px 0"><label>Název výpočtu</label><input data-fname="${i}" value="${esc(f.name)}"><label>Vzorec</label><textarea data-fexpr="${i}" style="min-height:45px">${esc(f.expr)}</textarea><label>Jednotka výsledku</label><input data-funit="${i}" value="${esc(f.unit||"")}" placeholder="např. CZK"><div class="hint" data-fresult="${i}">Zadejte testovací hodnoty níže pro ověření vzorce.</div><button data-formuladel="${i}">Odebrat vzorec</button></div>`).join(""); 
+fe.querySelectorAll("[data-fname]").forEach(e=>e.oninput=()=>{s.formulas[e.dataset.fname].name=e.value;renderTransactions()});
+fe.querySelectorAll("[data-fexpr]").forEach(e=>e.oninput=()=>{s.formulas[e.dataset.fexpr].expr=e.value;testFormulas();renderTransactions()});
+fe.querySelectorAll("[data-funit]").forEach(e=>e.oninput=()=>s.formulas[e.dataset.funit].unit=e.value);
+fe.querySelectorAll("[data-formuladel]").forEach(e=>e.onclick=()=>{s.formulas.splice(e.dataset.formuladel,1);editors();renderTransactions()});
+testFormulas();
+}}
+
+// Bezpečný parser matematických výrazů – nepoužívá eval ani Function.
+function calcExpr(src, vars){
+ const toks=[]; let i=0;
+ while(i<src.length){let c=src[i];if(/\s/.test(c)){i++;continue}
+ if(c==="["){let j=src.indexOf("]",i);if(j<0)throw Error("Neuzavřený název pole");toks.push({t:"var",v:src.slice(i+1,j).trim()});i=j+1;continue}
+ if(/[0-9.]/.test(c)){let m=src.slice(i).match(/^(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/i);if(!m)throw Error("Neplatné číslo");toks.push({t:"num",v:Number(m[0])});i+=m[0].length;continue}
+ if(/[a-z_]/i.test(c)){let m=src.slice(i).match(/^[a-z_][a-z0-9_]*/i)[0];toks.push({t:"id",v:m.toUpperCase()});i+=m.length;continue}
+ if("+-*/(),<>=".includes(c)){let two=src.slice(i,i+2);if(["<=",">=","==","!="].includes(two)){toks.push({t:"op",v:two});i+=2}else{toks.push({t:"op",v:c});i++}continue}
+ throw Error("Nepovolený znak: "+c);
+ }
+ let p=0, peek=()=>toks[p], take=()=>toks[p++];
+ function primary(){let t=take();if(!t)throw Error("Chybí hodnota");
+  if(t.t==="num")return t.v;
+  if(t.t==="var"){if(!(t.v in vars))throw Error("Chybí hodnota pole ["+t.v+"]");let n=Number(vars[t.v]);if(!Number.isFinite(n))throw Error("Pole ["+t.v+"] není číslo");return n}
+  if(t.v==="("){let v=cmp();if(!peek()||take().v!==")")throw Error("Chybí )");return v}
+  if(t.t==="id"){if(!peek()||take().v!=="(")throw Error("Neznámá funkce "+t.v);let a=[];if(peek()&&peek().v!==")"){do{a.push(cmp());if(!peek()||peek().v!==",")break;take()}while(true)}if(!peek()||take().v!==")")throw Error("Chybí ) u funkce");let f={ABS:()=>Math.abs(a[0]),MIN:()=>Math.min(...a),MAX:()=>Math.max(...a),ROUND:()=>{let d=a.length>1?a[1]:0;return Math.round(a[0]*10**d)/10**d},IF:()=>a[0]?a[1]:a[2]};if(!f[t.v])throw Error("Nepodporovaná funkce "+t.v);return f[t.v]()}
+  if(t.v==="-")return -primary();if(t.v==="+")return primary();throw Error("Neočekávaný token");
+ }
+ function mul(){let v=primary();while(peek()&&["*","/"].includes(peek().v)){let op=take().v,b=primary();v=op==="*"?v*b:v/b}return v}
+ function add(){let v=mul();while(peek()&&["+","-"].includes(peek().v)){let op=take().v,b=mul();v=op==="+"?v+b:v-b}return v}
+ function cmp(){let v=add();while(peek()&&["<",">","<=",">=","==","!="].includes(peek().v)){let op=take().v,b=add();v=op==="<"?+(v<b):op===">"?+(v>b):op==="<="?+(v<=b):op===">="?+(v>=b):op==="=="?+(v===b):+(v!==b)}return v}
+ let out=cmp();if(p<toks.length)throw Error("Neočekávaná část vzorce");if(!Number.isFinite(out))throw Error("Výsledek není konečné číslo (zkontrolujte dělení nulou)");return out;
+}
+
+let transactionRows=[], transactionHeaders=[];
+function parseCSV(text){
+ text=text.replace(/^\uFEFF/,"");let first=text.split(/\r?\n/,1)[0]||"", candidates=[";",",","\t"], delim=candidates.sort((a,b)=>first.split(b).length-first.split(a).length)[0];
+ let rows=[],row=[],field="",quoted=false;
+ for(let i=0;i<text.length;i++){let c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){field+='"';i++}else if(c==='"')quoted=false;else field+=c}
+ else if(c==='"')quoted=true;else if(c===delim){row.push(field);field=""}else if(c==='\n'){row.push(field);if(row.some(x=>x.trim()!==""))rows.push(row);row=[];field=""}else if(c!=="\r")field+=c}
+ row.push(field);if(row.some(x=>x.trim()!==""))rows.push(row);
+ if(rows.length<2)throw Error("CSV musí obsahovat záhlaví a alespoň jeden řádek transakce.");
+ let headers=rows[0].map((x,i)=>x.trim()||("Sloupec "+(i+1)));
+ return {headers,rows:rows.slice(1).map(r=>Object.fromEntries(headers.map((h,i)=>[h,(r[i]??"").trim()])))};
+}
+function numericValue(v){if(typeof v==="number")return v;let x=String(v??"").trim().replace(/\s/g,"").replace(/[€$£]/g,"");if(!x)return 0;if(x.includes(",")&&x.includes("."))x=x.lastIndexOf(",")>x.lastIndexOf(".")?x.replace(/\./g,"").replace(",","."):x.replace(/,/g,"");else x=x.replace(",",".");let n=Number(x);if(!Number.isFinite(n))throw Error("Hodnota '"+v+"' není číslo");return n}
+function calculateRow(row){
+ let values={};for(let [k,v] of Object.entries(row)){try{values[k]=numericValue(v)}catch{values[k]=v}}
+ let results={},errors={};
+ for(let f of (s.formulas||[])){try{let vars={...values,...results};let val=calcExpr(f.expr,vars);results[f.name]=val}catch(e){errors[f.name]=e.message}}
+ return {results,errors};
+}
+function renderTransactions(){
+ let status=$("csvStatus"),box=$("csvPreview"),btn=$("downloadCsv");
+ if(!transactionRows.length){status.textContent="Zatím nejsou načteny žádné transakce.";box.innerHTML="";btn.disabled=true;return}
+ let computed=transactionRows.map(r=>calculateRow(r)), names=(s.formulas||[]).map(f=>f.name);
+ status.textContent=`Načteno ${transactionRows.length} transakcí a ${transactionHeaders.length} vstupních sloupců. Vzorce se vyhodnocují samostatně pro každý řádek.`;
+ let headers=[...transactionHeaders,...names.map(n=>"Výpočet: "+n),"Stav výpočtu"];
+ let body=transactionRows.slice(0,100).map((r,i)=>{let c=computed[i];return [...transactionHeaders.map(h=>r[h]),...names.map(n=>c.results[n]??"—"),Object.keys(c.errors).length?Object.entries(c.errors).map(([k,v])=>k+": "+v).join("; "):"OK"]});
+ box.innerHTML=`<div class="hint">Náhled prvních ${Math.min(100,transactionRows.length)} řádků${transactionRows.length>100?" (celkem "+transactionRows.length+")":""}.</div><table class="tbl"><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${body.map(row=>`<tr>${row.map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+ btn.disabled=false;
+}
+function downloadCalculatedCSV(){
+ if(!transactionRows.length)return;
+ let names=(s.formulas||[]).map(f=>f.name),headers=[...transactionHeaders,...names.map(n=>"Výpočet: "+n),"Chyba výpočtu"];
+ let rows=transactionRows.map(r=>{let c=calculateRow(r);return [...transactionHeaders.map(h=>r[h]),...names.map(n=>c.results[n]??""),Object.entries(c.errors).map(([k,v])=>k+": "+v).join(" | ")]});
+ let quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+ let csv="\uFEFF"+[headers,...rows].map(r=>r.map(quote).join(";")).join("\r\n");
+ let a=document.createElement("a"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.href=url;a.download="pluso-transakce-vysledky.csv";a.click();URL.revokeObjectURL(url);
+}
+$("csvFile").addEventListener("change",async e=>{let file=e.target.files[0];if(!file)return;try{let parsed=parseCSV(await file.text());transactionHeaders=parsed.headers;transactionRows=parsed.rows;renderTransactions()}catch(err){$("csvStatus").textContent="Chyba importu: "+err.message;transactionRows=[];renderTransactions()}});
+$("clearCsv").onclick=()=>{transactionRows=[];transactionHeaders=[];$("csvFile").value="";renderTransactions()};
+$("downloadCsv").onclick=downloadCalculatedCSV;
+function testFormulas(){let box=$("formulaTests");if(!box)return;let vars={};document.querySelectorAll("[data-testvar]").forEach(e=>vars[e.dataset.testvar]=e.value);document.querySelectorAll("[data-fresult]").forEach((e,i)=>{try{let v=calcExpr(s.formulas[i].expr,vars);e.textContent="Výsledek testu: "+new Intl.NumberFormat("cs-CZ",{maximumFractionDigits:4}).format(v)+" "+(s.formulas[i].unit||"");e.style.color="#167447"}catch(err){e.textContent="Kontrola: "+err.message;e.style.color="#b42318"}})}
+fill();editors();preview();document.querySelectorAll("[data-testvar]").forEach(e=>e.oninput=testFormulas);$("addFormula").onclick=()=>{s.formulas=s.formulas||[];s.formulas.push({name:"Nový výpočet",expr:"[Počet kusů] * [Nákupní cena]",unit:"CZK"});editors();renderTransactions()};
 ["title","subtitle","navy","accent","client","account","from","to","issued","disclaimer","fx","note"].forEach(k=>$(k).oninput=()=>{s[k]=$(k).value;preview()});
 $("logoFile").onchange=e=>{let f=e.target.files[0];if(f){let r=new FileReader();r.onload=()=>{s.logo=r.result;preview()};r.readAsDataURL(f)}};
 $("addKpi").onclick=()=>{s.kpis.push(["Nový ukazatel","{{Hodnota}}",true]);editors();preview()};$("addCol").onclick=()=>{s.cols.push("Nový sloupec");editors();preview()};$("addProd").onclick=()=>{s.products.push("Nová produktová skupina");editors();preview()};$("addFaq").onclick=()=>{s.faqs.push(["Nová otázka","Doplňte odpověď."]);editors();preview()};
